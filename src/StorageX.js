@@ -1,5 +1,6 @@
 /*jshint esversion: 9 */
 import {
+    taskList,
     getItem,
     removeItem,
     setItem,
@@ -50,7 +51,7 @@ class StorageXTool{
                 function(){  //get 回调
                     setTimeout(()=>{  //防止存储时异步没有执行
                         if(!getItem(key,mode)){  //如果该键在使用过程中清空的话向外抛出异常
-                            throw `发现 ${key} 在使用过程中已被清空，至少是一个空对象`;
+                            throw `发现 ${key} 在使用过程中已被清空，值至少是一个空对象`;
                         }
                     },0);
                 },
@@ -59,6 +60,12 @@ class StorageXTool{
     }
 }
 //向外部暴露使用方法
+function handleTasks(){  //保存列表里所有的任务
+    for(let index in taskList){
+        if(!taskList[index]) break;
+        taskList[index]();  //执行任务
+    }
+}
 function removeStorageItem(key,mode='local'){
     removeItem(key,mode);
 }
@@ -150,6 +157,7 @@ class WxStorageX{
     }
 }
 export {
+    handleTasks,
     removeStorageItem,
     storageX,
     StorageX,

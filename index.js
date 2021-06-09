@@ -8,6 +8,7 @@
 /*jshint esversion: 9 */
 //可以根据自己的需求导出那些函数
 import {
+    handleTasks,
     removeStorageItem,
     storageX,
     StorageX,
@@ -21,6 +22,7 @@ import {
     WxStorageX,
 } from "./src/StorageX";
 export {
+    handleTasks,
     removeStorageItem,
     storageX,
     StorageX,

@@ -6,6 +6,7 @@
 npm install storagex-js
 //导入 需要什么就导入什么 所有方法皆是同步方法
 import {
+    handleTasks,  //执行所有的任务
     removeStorageItem,
     storageX,
     StorageX,
@@ -156,6 +157,8 @@ LocalStorageX.removeItem(<key>);
 **可能遇到的问题：因为深度对象化代理难免遇到大数据量的循环修改，每修改一次就存一次太消耗性能，所以一次任务有多次修改的话，那么最多会存两次，一是第一次修改存一次，二是创建了一个宏任务等待被执行后保存（跟js写的防抖函数类似）。**
 
 > ## 开发日志
+
+## 1.4.2 新加 handleTasks 方法，执行所有的任务，使用深层次的代理对象修改时最后一次是放在下一个微任务（使用的 queueMicrotask Api，如果浏览器不支持则使用setTimeout）中修改，所以 handleTasks 方法是会直接执行添加进的那个宏任务。
 
 ## 1.4.1 对不是深层次的代理对象修改后立即更新到本地储存
 

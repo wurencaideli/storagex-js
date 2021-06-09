@@ -1,6 +1,6 @@
 {
   "name": "storagex-js",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "一个好用的前端对象化存储工具",
   "main": "index.js",
   "scripts": {

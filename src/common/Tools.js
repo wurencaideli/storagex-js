@@ -1,6 +1,28 @@
 /*jshint esversion: 9 */
 /* eslint-disable */
 //公共的工具函数
+class MyTask{  //任务类
+    taskList = {};
+    setMyTask(fn){  //创建任务(优先微任务)
+        try{
+            const sign = Symbol();  //唯一标识
+            this.taskList[sign] = fn;
+            queueMicrotask(()=>{
+                if(!this.taskList[sign]) return;
+                this.taskList[sign]();
+            });
+            return sign;
+        }catch{
+            return setTimeout(fn,0);
+        }
+    }
+    clearMyTask(sign){  //清除该微任务
+        if(typeof sign !== "symbol"){  //表示不是微任务而是宏任务
+            clearTimeout(sign);
+        }
+        delete this.taskList[sign];
+    }
+}
 export function stringToObject(value){  //字符串转化为对象
     try {
         return JSON.parse(value);
@@ -43,23 +65,30 @@ export function removeItem(key,mode){  //根据键名清空  删除的话 mode�
             throw mode + "没有此模式";
     }
 }
-const taskList = {};  //任务队列
+const myTask = new MyTask();
+export const taskTimerList = {};  //计时器任务列表
+export const taskList = {};  //任务列表（用于记录所有产生的计时器执行函数）
 export function setItem(key,value,mode,debounce=true){  //写入数据（包装优化）
     if(typeof key !== "string" || !key) throw "key 必须是字符串 || key 不能为空";
-    if(debounce){
-        //性能优化，防止频繁操作 (针对大数据会有明显加快，小数据可能会花费更多的时间)
-        if(!taskList[key+mode]){
+    if(debounce){  //性能优化，防止频繁操作 (针对大数据会有明显加快，小数据可能会花费更多的时间)
+        if(!taskTimerList[key+mode]){
             _setItem(key,value,mode);
-            taskList[key+mode] = setTimeout(()=>{
-                taskList[key+mode] = undefined;
-            },0);
+            taskList[key+mode] = function(){
+                myTask.clearMyTask(taskTimerList[key+mode]);
+                delete taskTimerList[key+mode];
+                delete taskList[key+mode];
+            }
+            taskTimerList[key+mode] = myTask.setMyTask(taskList[key+mode]);
         }else{
-            clearTimeout(taskList[key+mode]);  //取消任务
-            taskList[key+mode] = setTimeout(()=>{
+            myTask.clearMyTask(taskTimerList[key+mode]);  //取消上一次任务
+            taskList[key+mode] = function(){
+                myTask.clearMyTask(taskTimerList[key+mode]);
                 _setItem(key,value,mode);
-                taskList[key+mode] = undefined;
-            },0);
-        } 
+                delete taskTimerList[key+mode];
+                delete taskList[key+mode];
+            }
+            taskTimerList[key+mode] = myTask.setMyTask(taskList[key+mode]);
+        }
     }else{
         _setItem(key,value,mode);
     }
