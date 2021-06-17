@@ -158,6 +158,8 @@ LocalStorageX.removeItem(<key>);
 
 > ## 开发日志
 
+## 1.4.3 （已修复）在使用npm引入后使用webpack打包时报错，因为有个文件使用了class且没有constructor()方法初始化属性，直接给一个属性赋了值，这样webpack loder会报错，不晓得为什么，我明明只想在原型上挂载的，结果却只能写在new出来的对象身上，不解。
+
 ## 1.4.2 新加 handleTasks 方法，执行所有的任务，使用深层次的代理对象修改时最后一次是放在下一个微任务（使用的 queueMicrotask Api，如果浏览器不支持则使用setTimeout）中修改，所以 handleTasks 方法是会直接执行添加进的那个宏任务。
 
 ## 1.4.1 对不是深层次的代理对象修改后立即更新到本地储存

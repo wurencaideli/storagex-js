@@ -2,7 +2,9 @@
 /* eslint-disable */
 //公共的工具函数
 class MyTask{  //任务类
-    taskList = {};
+    constructor(){
+        this.taskList={};
+    }
     setMyTask(fn){  //创建任务(优先微任务)
         try{
             const sign = Symbol();  //唯一标识
