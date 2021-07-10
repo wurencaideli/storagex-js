@@ -1,4 +1,4 @@
-> **storagex-js 1.4.0**
+> **storagex-js 1.4.4**
 
 ## 首先需要安装引入 storagex-js
 ```js
