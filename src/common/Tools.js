@@ -6,7 +6,7 @@ class MyTask{  //任务类
         this.taskList={};
     }
     setMyTask(fn){  //创建任务(优先微任务)
-        try{
+        if(window.queueMicrotask){
             const sign = Symbol();  //唯一标识
             this.taskList[sign] = fn;
             queueMicrotask(()=>{
@@ -14,7 +14,7 @@ class MyTask{  //任务类
                 this.taskList[sign]();
             });
             return sign;
-        }catch{
+        }else{
             return setTimeout(fn,0);
         }
     }
@@ -73,24 +73,13 @@ export const taskList = {};  //任务列表（用于记录所有产生的计时�
 export function setItem(key,value,mode,debounce=true){  //写入数据（包装优化）
     if(typeof key !== "string" || !key) throw "key 必须是字符串 || key 不能为空";
     if(debounce){  //性能优化，防止频繁操作 (针对大数据会有明显加快，小数据可能会花费更多的时间)
-        if(!taskTimerList[key+mode]){
+        myTask.clearMyTask(taskTimerList[key+mode]);  //取消上一次任务
+        taskList[key+mode] = ()=>{
             _setItem(key,value,mode);
-            taskList[key+mode] = function(){
-                myTask.clearMyTask(taskTimerList[key+mode]);
-                delete taskTimerList[key+mode];
-                delete taskList[key+mode];
-            }
-            taskTimerList[key+mode] = myTask.setMyTask(taskList[key+mode]);
-        }else{
-            myTask.clearMyTask(taskTimerList[key+mode]);  //取消上一次任务
-            taskList[key+mode] = function(){
-                myTask.clearMyTask(taskTimerList[key+mode]);
-                _setItem(key,value,mode);
-                delete taskTimerList[key+mode];
-                delete taskList[key+mode];
-            }
-            taskTimerList[key+mode] = myTask.setMyTask(taskList[key+mode]);
-        }
+            delete taskTimerList[key+mode];
+            delete taskList[key+mode];
+        };
+        taskTimerList[key+mode] = myTask.setMyTask(taskList[key+mode]);
     }else{
         _setItem(key,value,mode);
     }

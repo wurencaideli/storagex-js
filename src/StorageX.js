@@ -48,32 +48,27 @@ class StorageXTool{
                 function(){  //set 回调
                     setItem(key,target,mode,true);
                 },
-                function(){  //get 回调
-                    setTimeout(()=>{  //防止存储时异步没有执行
-                        if(!getItem(key,mode)){  //如果该键在使用过程中清空的话向外抛出异常
-                            throw `发现 ${key} 在使用过程中已被清空，值至少是一个空对象`;
-                        }
-                    },0);
+                function(){  //get 回调  (会影响性能)
                 },
             );
         }
     }
 }
 //向外部暴露使用方法
-function handleTasks(){  //保存列表里所有的任务
+export function handleTasks(){  //保存列表里所有的任务
     for(let index in taskList){
         if(!taskList[index]) break;
         taskList[index]();  //执行任务
     }
 }
-function removeStorageItem(key,mode='local'){
+export function removeStorageItem(key,mode='local'){
     removeItem(key,mode);
 }
-function storageX(key,target,mode){
+export function storageX(key,target,mode){
     return new StorageXTool({key,target,mode});
 }
 storageX.removeItem = removeItem;
-class StorageX{  //类的方式使用
+export class StorageX{  //类的方式使用
     static removeItem(key,mode){
         removeItem(key,mode);
     }
@@ -85,13 +80,13 @@ class StorageX{  //类的方式使用
     }
 }
 //localStorage模式
-function localStorageX(key,target){
+export function localStorageX(key,target){
     return new StorageXTool({key,target,mode:'local'});
 }
 localStorageX.removeItem = function(key){
     return removeItem(key,'cocal');
-}
-class LocalStorageX{ 
+};
+export class LocalStorageX{ 
     static removeItem(key){
         removeItem(key,'local');
     }
@@ -103,13 +98,13 @@ class LocalStorageX{
     }
 }
 //sessionStorage模式
-function sessionStorageX(key,target){
+export function sessionStorageX(key,target){
     return new StorageXTool({key,target,mode:'session'});
 }
 sessionStorageX.removeItem = function(key){
     return removeItem(key,'session');
-}
-class SessionStorageX{ 
+};
+export class SessionStorageX{ 
     static removeItem(key){
         removeItem(key,'session');
     }
@@ -121,13 +116,13 @@ class SessionStorageX{
     }
 }
 //uniapp模式
-function uniStorageX(key,target){
+export function uniStorageX(key,target){
     return new StorageXTool({key,target,mode:'uni'});
 }
 uniStorageX.removeItem = function(key){
     return removeItem(key,'uni');
-}
-class UniStorageX{ 
+};
+export class UniStorageX{ 
     static removeItem(key){
         removeItem(key,'uni');
     }
@@ -139,13 +134,13 @@ class UniStorageX{
     }
 }
 //wx模式
-function wxStorageX(key,target){
+export function wxStorageX(key,target){
     return new StorageXTool({key,target,mode:'wx'});
 }
 wxStorageX.removeItem = function(key){
     return removeItem(key,'wx');
-}
-class WxStorageX{ 
+};
+export class WxStorageX{ 
     static removeItem(key){
         removeItem(key,'wx');
     }
@@ -156,17 +151,3 @@ class WxStorageX{
         return new StorageXTool({key,target,mode:'wx'});
     }
 }
-export {
-    handleTasks,
-    removeStorageItem,
-    storageX,
-    StorageX,
-    localStorageX,
-    LocalStorageX,
-    sessionStorageX,
-    SessionStorageX,
-    uniStorageX,
-    UniStorageX,
-    wxStorageX,
-    WxStorageX,
-};
