@@ -106,33 +106,64 @@ function _setItem(key,value,mode){  //写入数据
     }
 }
 //深层对象代理(<目标对象>,<统一的set回调函数>)
-export function deepProxy(target,setFn,getFn){
+const setFnKey = Symbol();  //写入函数的唯一键
+export function deepProxy(target,setFn){
     if(!(target instanceof Object)) return target;
     for(let index in target){
-        if(target[index] instanceof Object){  //如果是对象的话转成代理对象
-            target[index] = deepProxy(target[index],setFn,getFn);
-        }
+        Reflect.set(target,index,deepProxy(target[index],setFn));
     }
-    return new Proxy(
+    if(target[setFnKey]){  //有写入方法时直接返回,防止重复代理
+        target[setFnKey] = setFn;
+        return target;
+    }
+    target = new Proxy(
         target,
         {
             set(_target,_key,_value){
-                if(_value instanceof Object){  //如果是对象的话转成深度代理对象
-                    _value = deepProxy(_value,setFn,getFn);
+                let isSame = false;  //值是否相同
+                if((_value instanceof Object)?(_target[_key] === _value && _target[setFnKey] === _value[setFnKey]):(_target[_key] === _value)){  //只有值相同并且值为对象时写入函数相同才判断相同
+                    isSame = true;
                 }
+                _value = deepProxy(_value,_target[setFnKey]);
                 let r = Reflect.set(_target, _key, _value);
-                setFn(_key);
+                if(
+                    _key != setFnKey  //设置写入键时不触发写入
+                    && typeof _target[setFnKey] == 'function'  //当写入函数不是函数时不触发写入
+                    && !isSame  //当值相同时不触发写入
+                ){
+                    _target[setFnKey]();
+                }
                 return r;
             },
             get(_target,_key){
-                getFn(_key);
-                return _target[_key];
+                if(_target[_key] instanceof Object && _target[_key][setFnKey] != _target[setFnKey]){  //读取时重新分配写入函数
+                    Reflect.set(_target[_key],setFnKey,_target[setFnKey]);
+                }
+                return Reflect.get(_target,_key);
             },
             deleteProperty(_target, _key) {
                 let r = Reflect.deleteProperty(_target, _key);
-                setFn(_key);
+                if(typeof _target[setFnKey] == 'function'){
+                    _target[setFnKey]();
+                }
                 return r;
             }
         },
     );
+    Object.defineProperty(target, setFnKey, {  //设置属性描述符
+        configurable: false,
+        enumerable: false,
+        writable: true,
+        value: setFn,
+    });
+    return target;
+}
+export function deepRemoveProxy(target){  //深度取消代理
+    if(!(target instanceof Object)) return target;
+    for(let index in target){
+        target[index] = deepRemoveProxy(target[index]);
+    }
+    if(typeof target[setFnKey] == 'function'){
+        target[setFnKey] = true;
+    }
 }
