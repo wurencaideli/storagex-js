@@ -48,8 +48,6 @@ class StorageXTool{
                 function(){  //set 回调
                     setItem(key,target,mode,true);
                 },
-                function(){  //get 回调  (会影响性能)
-                },
             );
         }
     }
