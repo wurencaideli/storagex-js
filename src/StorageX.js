@@ -1,72 +1,95 @@
 /*jshint esversion: 9 */
 import {
+    isObject,
     taskList,
     getItem,
     removeItem,
-    setItem,
+    beforeSetItem,
     deepProxy,
 } from "./common/Tools";
-//storage本地储存对象化代理，只有两种模式(只针对数据)
+/**
+ storagex工具对象
+ */
 class StorageXTool{
+    /**
+     字符串转化为对象
+     @param 数据对象 key:键 target:目标 mode:模式
+     */
     constructor({key,target={},mode}={}){
-        if(arguments.length>0 && !(arguments[0] instanceof Object)){
-            throw "参数只能是一个对象 {key:键,target:对象,mode:模式}";
+        if(arguments.length>0 && !isObject(arguments[0])){
+            throw "参数只能是一个对象";
         }
         if(!mode) throw "mode 不能为空";
-        if(!key){  //表示代理整个localStorage (key表示localStorage的key，不深度代理)
+        if(!key){  //表示代理所有键（不深度代理）
             return new Proxy(
                 {},
                 {
-                    get(_target,_key){  //获取某个键的值
+                    get(_target,_key){
                         if(typeof _key !== "string") throw "key 必须是字符串";
                         _target[_key] = getItem(_key,mode);
                         return _target[_key];
                     },
-                    set(_target,_key,_value){  //写入某个键的值
+                    set(_target,_key,_value){
                         let r = Reflect.set(
                             _target, 
                             _key, 
                             _value,
                         );
-                        setItem(_key,_value,mode,false);
+                        beforeSetItem(_key,_value,mode,false);
                         return r;
                     },
                 },
             );
-        }else{  //表示代理一个键，对应一个对象（深度代理）
+        }else{
             if(typeof key !== "string") throw "key 必须是字符串";
-            if(!(target instanceof Object) || (typeof target === "function")) throw "target 必须是对象,且不能是函数";
-            let oldTarget = getItem(key,mode);
+            if(!isObject(target) || (typeof target === "function")) throw "target 必须是对象,且不能是函数";
+            let oldTarget = getItem(key,mode);  //以已有数据为准
             if(!oldTarget){
-                setItem(key,target,mode,false);  //初始化
+                beforeSetItem(key,target,mode,false);
             }else{
-                target = oldTarget;  //如果键中有值则以该值为准
-                if(!(target instanceof Object)) throw  `发现 ${key} 中有原始值且不能转化为对象`;
+                target = oldTarget;
+                if(!isObject(target)) throw  `发现 ${key} 中有原始值且不能转化为对象`;
             }
             return deepProxy(
                 target,
-                function(){  //set 回调
-                    setItem(key,target,mode,true);
+                function(){
+                    beforeSetItem(key,target,mode,true);
                 },
             );
         }
     }
 }
-//向外部暴露使用方法
-export function handleTasks(){  //保存列表里所有的任务
+/**
+ 执行现有列表里所有的任务
+ */
+export function handleTasks(){
     for(let index in taskList){
         if(!taskList[index]) break;
-        taskList[index]();  //执行任务
+        taskList[index]();
     }
 }
+/**
+ 根据键名清除缓存
+ @param 键
+ @param 模式
+ */
 export function removeStorageItem(key,mode='local'){
     removeItem(key,mode);
 }
+/**
+ 生成代理对象
+ @param 键
+ @param 目标
+ @param 模式
+ */
 export function storageX(key,target,mode){
     return new StorageXTool({key,target,mode});
 }
 storageX.removeItem = removeItem;
-export class StorageX{  //类的方式使用
+/**
+ 参数及作用参考上文，或根据语义判断
+ */
+export class StorageX{
     static removeItem(key,mode){
         removeItem(key,mode);
     }
@@ -77,7 +100,6 @@ export class StorageX{  //类的方式使用
         return new StorageXTool({key,target,mode});
     }
 }
-//localStorage模式
 export function localStorageX(key,target){
     return new StorageXTool({key,target,mode:'local'});
 }
@@ -95,7 +117,6 @@ export class LocalStorageX{
         return new StorageXTool({key,target,mode:'local'});
     }
 }
-//sessionStorage模式
 export function sessionStorageX(key,target){
     return new StorageXTool({key,target,mode:'session'});
 }
@@ -113,7 +134,6 @@ export class SessionStorageX{
         return new StorageXTool({key,target,mode:'session'});
     }
 }
-//uniapp模式
 export function uniStorageX(key,target){
     return new StorageXTool({key,target,mode:'uni'});
 }
@@ -131,7 +151,6 @@ export class UniStorageX{
         return new StorageXTool({key,target,mode:'uni'});
     }
 }
-//wx模式
 export function wxStorageX(key,target){
     return new StorageXTool({key,target,mode:'wx'});
 }
